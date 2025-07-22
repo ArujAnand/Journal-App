@@ -1,11 +1,14 @@
 package net.engineeringdigest.journalApp.service;
 
 import net.engineeringdigest.journalApp.entity.JournalEntry;
+import net.engineeringdigest.journalApp.entity.UserEntity;
 import net.engineeringdigest.journalApp.repository.JournalEntryRepository;
+import org.apache.catalina.User;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,8 +18,21 @@ public class JournalEntryService {
     @Autowired
     private JournalEntryRepository journalEntryRepository;
 
-    public void saveEntry(JournalEntry journalEntry) {
+    @Autowired
+    private UserService userService;
+
+    public boolean saveEntry(JournalEntry journalEntry, String username) {
+        UserEntity user = userService.findByUsername(username);
+
+        if (user == null) {
+            return false;
+        }
+
+        journalEntry.setDate(LocalDateTime.now());
         journalEntryRepository.save(journalEntry);
+        user.getJournalEntries().add(journalEntry);
+        userService.saveUser(user);
+        return true;
     }
 
     public List<JournalEntry> getAll() {
@@ -27,8 +43,18 @@ public class JournalEntryService {
         return journalEntryRepository.findById(myId);
     }
 
-    public boolean deleteById (ObjectId myId) {
-        if (journalEntryRepository.findById(myId).isPresent()) {
+    public boolean deleteById (ObjectId myId, String username) {
+        UserEntity user = userService.findByUsername(username);
+
+        if (user == null) {
+            return false;
+        }
+
+        if(user.getJournalEntries().removeIf(x -> x.getId().equals(myId))) {
+            //update user
+            userService.saveUser(user);
+
+            //delete from journals db as well after removing refernce from user db
             journalEntryRepository.deleteById(myId);
             return true;
         }
@@ -36,7 +62,17 @@ public class JournalEntryService {
         return false;
     }
 
-    public JournalEntry updateById(ObjectId myId, JournalEntry newEntry) {
+    public JournalEntry updateById(ObjectId myId, JournalEntry newEntry, String username) {
+        UserEntity user = userService.findByUsername(username);
+
+        if (user == null) {
+            return null;
+        }
+
+        if (user.getJournalEntries().stream().noneMatch(journalEntry -> journalEntry.getId().equals(myId))) {
+            return null;
+        }
+
         JournalEntry oldEntry = journalEntryRepository.findById(myId).orElse(null);
 
         if (oldEntry != null) {
