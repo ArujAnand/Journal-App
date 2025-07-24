@@ -7,6 +7,7 @@ import org.apache.catalina.User;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,7 @@ public class JournalEntryService {
     @Autowired
     private UserService userService;
 
+    @Transactional
     public boolean saveEntry(JournalEntry journalEntry, String username) {
         UserEntity user = userService.findByUsername(username);
 
@@ -54,7 +56,7 @@ public class JournalEntryService {
             //update user
             userService.saveUser(user);
 
-            //delete from journals db as well after removing refernce from user db
+            //delete from journals db as well after removing reference from user db
             journalEntryRepository.deleteById(myId);
             return true;
         }
