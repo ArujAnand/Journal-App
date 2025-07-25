@@ -23,6 +23,7 @@ public class UserDetailServiceImplementaion implements UserDetailsService {
                     .builder()
                     .username(user.getUsername())
                     .password(user.getPassword())
+                    .roles(user.getRoles().toArray(new String[0]))
                     .build();
 
             return userDetails;
