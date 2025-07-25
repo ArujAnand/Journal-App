@@ -26,10 +26,6 @@ public class JournalEntryService {
     public boolean saveEntry(JournalEntry journalEntry, String username) {
         UserEntity user = userService.findByUsername(username);
 
-        if (user == null) {
-            return false;
-        }
-
         journalEntry.setDate(LocalDateTime.now());
 
         try {
@@ -43,50 +39,53 @@ public class JournalEntryService {
         return true;
     }
 
-    public List<JournalEntry> getAll() {
-        return journalEntryRepository.findAll();
-    }
+//    public List<JournalEntry> getAll() {
+//        return journalEntryRepository.findAll();
+//    }
 
-    public Optional<JournalEntry> findById(ObjectId myId) {
-        return journalEntryRepository.findById(myId);
-    }
-
-    public boolean deleteById (ObjectId myId, String username) {
+    public Optional<JournalEntry> findById(ObjectId myId, String username) {
         UserEntity user = userService.findByUsername(username);
 
-        if (user == null) {
-            return false;
-        }
+        return user.getJournalEntries().stream().
+                filter(journalEntry -> journalEntry.getId().equals(myId)).findAny();
+    }
 
-        if(user.getJournalEntries().removeIf(x -> x.getId().equals(myId))) {
-            //update user
-            userService.saveUser(user);
+    @Transactional
+    public boolean deleteById (ObjectId myId, String username) {
+        UserEntity user = userService.findByUsername(username);
+        try {
+            if(user.getJournalEntries().removeIf(x -> x.getId().equals(myId))) {
+                //update user
+                userService.saveUser(user);
 
-            //delete from journals db as well after removing reference from user db
-            journalEntryRepository.deleteById(myId);
-            return true;
+                //delete from journals db as well after removing reference from user db
+                journalEntryRepository.deleteById(myId);
+                return true;
+            }
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            throw new RuntimeException("An error occured while deleting the entry. " + exception);
         }
 
         return false;
     }
 
+    @Transactional
     public JournalEntry updateById(ObjectId myId, JournalEntry newEntry, String username) {
         UserEntity user = userService.findByUsername(username);
 
-        if (user == null) {
-            return null;
-        }
+        Optional<JournalEntry> entry = findById(myId, username);
 
-        if (user.getJournalEntries().stream().noneMatch(journalEntry -> journalEntry.getId().equals(myId))) {
-            return null;
-        }
-
-        JournalEntry oldEntry = journalEntryRepository.findById(myId).orElse(null);
-
-        if (oldEntry != null) {
-            oldEntry.setTitle(newEntry.getTitle() !=  null && !newEntry.getTitle().isEmpty() ? newEntry.getTitle() : oldEntry.getTitle());
+        if(entry.isPresent()) {
+            JournalEntry oldEntry = entry.get();
+            oldEntry.setTitle(!newEntry.getTitle().isEmpty() ? newEntry.getTitle() : oldEntry.getTitle());
             oldEntry.setContent(newEntry.getContent() != null && !newEntry.getContent().isEmpty() ? newEntry.getContent() : oldEntry.getContent());
-            journalEntryRepository.save(oldEntry);
+            try {
+                journalEntryRepository.save(oldEntry);
+            } catch (Exception exception) {
+                System.out.println(exception.getMessage());
+                throw new RuntimeException("Error while updating the entry. " + exception);
+            }
             return oldEntry;
         }
         return null;

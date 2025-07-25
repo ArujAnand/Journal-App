@@ -23,10 +23,11 @@ public class UserController {
 //        return userService.getAll();
 //    }
 
-    @PostMapping
-    public void createUser(@RequestBody UserEntity newUser) {
-        userService.saveNewUser(newUser);
-    }
+//    Shifted to public endpoint
+//    @PostMapping
+//    public void createUser(@RequestBody UserEntity newUser) {
+//        userService.saveNewUser(newUser);
+//    }
 
     @PutMapping
     public ResponseEntity<UserEntity> updateUser(@RequestBody UserEntity user) {
