@@ -7,5 +7,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface UserRepository extends MongoRepository<UserEntity, ObjectId> {
     UserEntity findByUsername(String username);
 
-    void deleteByUsername(String name);
+    long deleteByUsername(String name);
 }

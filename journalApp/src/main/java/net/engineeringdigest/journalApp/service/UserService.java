@@ -46,7 +46,13 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    public void deleteUserByUsername(String name) {
-        userRepository.deleteByUsername(name);
+    public long deleteUserByUsername(String name) {
+        return userRepository.deleteByUsername(name);
+    }
+
+    public void saveAdmin(UserEntity newAdmin) {
+        newAdmin.setPassword(passwordEncoder.encode(newAdmin.getPassword()));
+        newAdmin.setRoles(Arrays.asList("USER","ADMIN"));
+        userRepository.save(newAdmin);
     }
 }
