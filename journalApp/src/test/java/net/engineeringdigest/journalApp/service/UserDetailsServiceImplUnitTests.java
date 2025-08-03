@@ -10,9 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 
-import static org.mockito.Mockito.*;
-
-public class UserDetailsServiceImplTests {
+public class UserDetailsServiceImplUnitTests {
 
     @InjectMocks
     private UserDetailServiceImplementaion userDetailsService;
@@ -27,7 +25,7 @@ public class UserDetailsServiceImplTests {
 
     @Test
     void loadUserByUsernameTest() {
-        when(userRepository.findByUsername(ArgumentMatchers.anyString()))
+        Mockito.when(userRepository.findByUsername(ArgumentMatchers.anyString()))
                 .thenReturn(UserEntity.builder()
                         .username("ram")
                         .password("ram")
